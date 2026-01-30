@@ -1,0 +1,37 @@
+# Enterprise Agentic RAG Platform - Python Dependencies
+# Compatible with pip install -r requirements.txt
+
+# FastAPI & Server
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
+
+# Pydantic & Validation  
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# MongoDB
+motor>=3.3.2
+pymongo>=4.6.1
+beanie>=1.24.0
+
+# Redis
+redis>=5.0.1
+
+# OpenAI (Default LLM & Embeddings)
+openai>=1.12.0
+
+# LLM & AI (Optional/Alternative)
+langchain>=0.1.0
+langchain-community>=0.0.10
+langgraph>=0.0.20
+httpx>=0.26.0
+
+# Vector Store & Embeddings (Fallback)
+sentence-transformers>=2.2.2
+numpy>=1.26.0
+
+# Utilities
+python-dotenv>=1.0.0
+tenacity>=8.2.3
+structlog>=24.1.0
