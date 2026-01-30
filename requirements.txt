@@ -1,0 +1,125 @@
+# =============================================================================
+# Enterprise Agentic RAG Platform v2.0.0 - Requirements
+# =============================================================================
+
+# Core Framework
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.6.0
+pydantic-settings>=2.1.0
+python-multipart>=0.0.7
+httpx>=0.26.0
+
+# Async Support
+asyncio-throttle>=1.0.2
+aiofiles>=23.2.1
+
+# Database - MongoDB
+motor>=3.3.2
+pymongo>=4.6.1
+
+# Cache - Redis
+redis>=5.0.1
+aioredis>=2.0.1
+
+# Vector Store - Milvus
+pymilvus>=2.3.6
+
+# LLM Providers
+openai>=1.12.0
+anthropic>=0.18.0
+tiktoken>=0.6.0
+
+# Embeddings & Re-ranking
+sentence-transformers>=2.3.1
+transformers>=4.37.2
+torch>=2.1.0
+
+# Cohere (Re-ranking & Embeddings)
+cohere>=4.47
+
+# Web Search Providers
+# Tavily (built for RAG)
+tavily-python>=0.3.0
+
+# Text Processing
+langchain>=0.1.6
+langchain-community>=0.0.20
+langchain-openai>=0.0.5
+rank-bm25>=0.2.2
+nltk>=3.8.1
+spacy>=3.7.2
+
+# Document Processing
+python-docx>=1.1.0
+pypdf2>=3.0.1
+pandas>=2.2.0
+openpyxl>=3.1.2
+
+# HTTP & API
+requests>=2.31.0
+urllib3>=2.2.0
+aiohttp>=3.9.3
+
+# Security
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+
+# Monitoring & Logging
+structlog>=24.1.0
+prometheus-client>=0.19.0
+opentelemetry-api>=1.22.0
+opentelemetry-sdk>=1.22.0
+opentelemetry-instrumentation-fastapi>=0.43b0
+
+# Configuration
+python-dotenv>=1.0.1
+pyyaml>=6.0.1
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.4
+pytest-cov>=4.1.0
+pytest-mock>=3.12.0
+httpx>=0.26.0
+
+# Code Quality
+black>=24.1.1
+isort>=5.13.2
+flake8>=7.0.0
+mypy>=1.8.0
+
+# Container/Kubernetes Support
+kubernetes>=29.0.0
+docker>=7.0.0
+
+# Development
+ipython>=8.20.0
+jupyter>=1.0.0
+
+# =============================================================================
+# Optional Dependencies for Enhanced Features
+# =============================================================================
+
+# For local LLM with Ollama
+# ollama>=0.1.6
+
+# For GPU acceleration (uncomment based on your CUDA version)
+# torch>=2.1.0+cu118  # For CUDA 11.8
+# torch>=2.1.0+cu121  # For CUDA 12.1
+
+# For advanced NLP
+# flair>=0.13.1
+
+# For graph-based RAG
+# neo4j>=5.17.0
+# networkx>=3.2.1
+
+# For SQL database tools
+# sqlalchemy>=2.0.25
+# asyncpg>=0.29.0
+
+# For message queue (alternative to in-memory)
+# celery>=5.3.6
+# kombu>=5.3.5
+# pika>=1.3.2  # RabbitMQ

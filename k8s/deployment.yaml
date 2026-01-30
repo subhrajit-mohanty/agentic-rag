@@ -1,0 +1,270 @@
+---
+# =============================================================================
+# Enterprise Agentic RAG Platform - Kubernetes Deployment
+# =============================================================================
+
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: agentic-rag
+  labels:
+    app: agentic-rag
+---
+
+# ConfigMap for application configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agentic-rag-config
+  namespace: agentic-rag
+data:
+  APP_ENV: "production"
+  LOG_LEVEL: "INFO"
+  
+  # MongoDB
+  MONGODB_URI: "mongodb://mongodb-service:27017"
+  MONGODB_DATABASE: "agentic_rag"
+  
+  # Redis
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  
+  # Milvus
+  MILVUS_HOST: "milvus-service"
+  MILVUS_PORT: "19530"
+  
+  # Re-ranker
+  RERANKER_PROVIDER: "both"
+  RERANKER_CROSS_ENCODER_MODEL: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+  RERANKER_CROSS_ENCODER_DEVICE: "cpu"
+  
+  # Multi-Agent
+  AGENT_ORCHESTRATION_MODE: "dynamic"
+  AGENT_MAX_ITERATIONS: "10"
+  AGENT_MAX_AGENT_CALLS: "20"
+  
+  # Tool Execution
+  TOOL_CONTAINER_RUNTIME: "kubernetes"
+  TOOL_CONTAINER_IMAGE: "python:3.11-slim"
+  TOOL_CONTAINER_TIMEOUT_SECONDS: "30"
+  TOOL_CONTAINER_MEMORY_LIMIT: "256Mi"
+  TOOL_CONTAINER_CPU_LIMIT: "500m"
+  
+  # Web Search
+  WEB_SEARCH_PROVIDER: "tavily"
+  
+  # Memory
+  MEMORY_SHORT_TERM_ENABLED: "true"
+  MEMORY_LONG_TERM_ENABLED: "true"
+  
+  # Verification
+  VERIFICATION_ENABLE_VERIFICATION: "true"
+  VERIFICATION_VERIFICATION_MODE: "moderate"
+  
+  # Feedback
+  FEEDBACK_ENABLE_FEEDBACK: "true"
+  FEEDBACK_ENABLE_ANALYTICS: "true"
+---
+
+# Secret for sensitive data
+apiVersion: v1
+kind: Secret
+metadata:
+  name: agentic-rag-secrets
+  namespace: agentic-rag
+type: Opaque
+stringData:
+  OPENAI_API_KEY: "${OPENAI_API_KEY}"
+  COHERE_API_KEY: "${COHERE_API_KEY}"
+  TAVILY_API_KEY: "${TAVILY_API_KEY}"
+  SECRET_KEY: "${SECRET_KEY}"
+---
+
+# ServiceAccount for code execution
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tool-executor
+  namespace: agentic-rag
+---
+
+# Role for code execution pods
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tool-executor-role
+  namespace: agentic-rag
+rules:
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["create", "get", "list", "watch", "delete"]
+- apiGroups: [""]
+  resources: ["pods", "pods/log"]
+  verbs: ["get", "list", "watch"]
+---
+
+# RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tool-executor-binding
+  namespace: agentic-rag
+subjects:
+- kind: ServiceAccount
+  name: tool-executor
+  namespace: agentic-rag
+roleRef:
+  kind: Role
+  name: tool-executor-role
+  apiGroup: rbac.authorization.k8s.io
+---
+
+# Main Application Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentic-rag-api
+  namespace: agentic-rag
+  labels:
+    app: agentic-rag-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: agentic-rag-api
+  template:
+    metadata:
+      labels:
+        app: agentic-rag-api
+    spec:
+      serviceAccountName: tool-executor
+      containers:
+      - name: api
+        image: agentic-rag:2.0.0
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - configMapRef:
+            name: agentic-rag-config
+        - secretRef:
+            name: agentic-rag-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /api/v2/health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/v2/health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: tmp-volume
+          mountPath: /tmp
+      volumes:
+      - name: tmp-volume
+        emptyDir: {}
+---
+
+# API Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: agentic-rag-api-service
+  namespace: agentic-rag
+spec:
+  selector:
+    app: agentic-rag-api
+  ports:
+  - port: 80
+    targetPort: 8000
+  type: ClusterIP
+---
+
+# Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: agentic-rag-ingress
+  namespace: agentic-rag
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+spec:
+  rules:
+  - host: rag.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: agentic-rag-api-service
+            port:
+              number: 80
+---
+
+# HorizontalPodAutoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: agentic-rag-api-hpa
+  namespace: agentic-rag
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agentic-rag-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+---
+
+# PodDisruptionBudget
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: agentic-rag-api-pdb
+  namespace: agentic-rag
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: agentic-rag-api
+---
+
+# NetworkPolicy - restrict code execution pods
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: code-executor-network-policy
+  namespace: agentic-rag
+spec:
+  podSelector:
+    matchLabels:
+      app: code-executor
+  policyTypes:
+  - Egress
+  egress: []  # No egress allowed by default for security
