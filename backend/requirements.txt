@@ -31,6 +31,9 @@ httpx>=0.26.0
 sentence-transformers>=2.2.2
 numpy>=1.26.0
 
+# Milvus Vector Database
+pymilvus>=2.3.0
+
 # Utilities
 python-dotenv>=1.0.0
 tenacity>=8.2.3

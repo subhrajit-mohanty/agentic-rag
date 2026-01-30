@@ -92,6 +92,36 @@ class LLMSettings(BaseSettings):
 class VectorStoreSettings(BaseSettings):
     """Vector store and embedding settings."""
     
+    # Vector store provider selection
+    provider: Literal["memory", "milvus"] = Field(
+        default="milvus",
+        description="Vector store provider to use"
+    )
+    
+    # Milvus settings
+    milvus_host: str = Field(default="localhost", description="Milvus host")
+    milvus_port: int = Field(default=19530, description="Milvus port")
+    milvus_collection: str = Field(
+        default="enterprise_rag_docs",
+        description="Milvus collection name"
+    )
+    milvus_index_type: str = Field(
+        default="IVF_FLAT",
+        description="Milvus index type (IVF_FLAT, IVF_SQ8, HNSW, etc.)"
+    )
+    milvus_metric_type: str = Field(
+        default="COSINE",
+        description="Milvus metric type (COSINE, L2, IP)"
+    )
+    milvus_nlist: int = Field(
+        default=128,
+        description="Number of cluster units for IVF index"
+    )
+    milvus_nprobe: int = Field(
+        default=16,
+        description="Number of units to query for IVF index"
+    )
+    
     # Embedding provider
     embedding_provider: Literal["openai", "sentence_transformers"] = Field(
         default="openai",

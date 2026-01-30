@@ -47,16 +47,16 @@ The Enterprise Agentic RAG Platform is a production-ready system that combines:
 │  └──────────┘  └──────────┘  └───────┘  └─────────┘  └──────────┘  │
 └──────────────────────────┬──────────────────────────────────────────┘
                            │
-        ┌──────────────────┼──────────────────┐
-        ▼                  ▼                  ▼
-┌───────────────┐  ┌───────────────┐  ┌───────────────┐
-│   MongoDB     │  │    Redis      │  │    Ollama     │
-│  (:27017)     │  │   (:6379)     │  │   (:11434)    │
-│               │  │               │  │               │
-│  • Documents  │  │  • Response   │  │  • llama3.2   │
-│  • Personas   │  │    Cache      │  │  • Generation │
-│  • Query Logs │  │  • Sessions   │  │  • Grading    │
-└───────────────┘  └───────────────┘  └───────────────┘
+        ┌──────────────────┼──────────────────┬──────────────────┐
+        ▼                  ▼                  ▼                  ▼
+┌───────────────┐  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐
+│   MongoDB     │  │    Redis      │  │    Milvus     │  │    Ollama     │
+│  (:27017)     │  │   (:6379)     │  │   (:19530)    │  │   (:11434)    │
+│               │  │               │  │               │  │               │
+│  • Documents  │  │  • Response   │  │  • Vectors    │  │  • llama3.2   │
+│  • Personas   │  │    Cache      │  │  • Semantic   │  │  • Generation │
+│  • Query Logs │  │  • Sessions   │  │    Search     │  │  • Grading    │
+└───────────────┘  └───────────────┘  └───────────────┘  └───────────────┘
 ```
 
 ## 🚀 Quick Start
@@ -105,6 +105,8 @@ make health
 |---------|-----|-------------|
 | **API Docs** | http://localhost:8000/docs | Interactive API documentation |
 | **Backend API** | http://localhost:8000 | REST API endpoints |
+| **Milvus** | localhost:19530 | Vector database (gRPC) |
+| **MinIO Console** | http://localhost:9001 | Object storage UI (Milvus) |
 | **Mongo Express** | http://localhost:8081 | MongoDB admin UI (dev mode) |
 | **Redis Commander** | http://localhost:8082 | Redis admin UI (dev mode) |
 
@@ -171,6 +173,10 @@ curl http://localhost:8000/api/v1/health
 | `REDIS_HOST` | `localhost` | Redis host |
 | `OLLAMA_HOST` | `http://localhost:11434` | Ollama API endpoint |
 | `LLM_MODEL` | `llama3.2:3b` | Default LLM model |
+| `VECTOR_PROVIDER` | `milvus` | Vector store: `milvus` or `memory` |
+| `VECTOR_MILVUS_HOST` | `localhost` | Milvus host |
+| `VECTOR_MILVUS_PORT` | `19530` | Milvus port |
+| `VECTOR_MILVUS_COLLECTION` | `enterprise_rag_docs` | Milvus collection name |
 | `MAX_RETRIEVAL_ATTEMPTS` | `2` | Max query rewrites |
 | `GUARDRAIL_THRESHOLD` | `60` | Min score to proceed (0-100) |
 | `TOP_K_RESULTS` | `5` | Documents to retrieve |
@@ -199,7 +205,8 @@ enterprise-rag-platform/
 │   │   ├── llm/
 │   │   │   └── client.py      # Ollama client
 │   │   └── vector_store/
-│   │       └── service.py     # Hybrid search
+│   │       ├── service.py     # Hybrid search service
+│   │       └── milvus_store.py # Milvus vector DB
 │   └── main.py                # FastAPI app
 ├── frontend/                   # React frontend
 ├── scripts/
